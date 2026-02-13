@@ -1,6 +1,6 @@
 // Valentine's Treasure Hunt — Rob & Lara
 // Set to true to bypass location checks (every check returns correct)
-export const testMode = true;
+export const testMode = false;
 
 const stops = [
   {
