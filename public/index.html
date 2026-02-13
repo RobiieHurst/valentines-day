@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💝 Valentine's Treasure Hunt</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    max-width: 420px;
+    width: 100%;
+    padding: 24px;
+    text-align: center;
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 8px; }
+  .heart { font-size: 3rem; margin-bottom: 16px; }
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.3s;
+  }
+  .dot.done { background: #e91e63; }
+  .dot.current { background: #ff5252; box-shadow: 0 0 10px #ff5252; }
+  .riddle-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 28px 20px;
+    margin: 20px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .riddle-text {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .stop-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 12px;
+  }
+  button {
+    background: linear-gradient(135deg, #e91e63, #ff5252);
+    color: #fff;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    width: 100%;
+    max-width: 280px;
+  }
+  button:active { transform: scale(0.96); }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .feedback {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.4); }
+  .feedback.wrong { background: rgba(255,82,82,0.15); border: 1px solid rgba(255,82,82,0.3); }
+  .hint { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 8px; }
+  .finished {
+    display: none;
+    text-align: center;
+  }
+  .finished.show { display: block; }
+  .finished h2 { font-size: 2rem; margin: 16px 0; }
+  .finished .big-heart { font-size: 5rem; }
+  .start-screen { text-align: center; }
+  .start-screen p { color: rgba(255,255,255,0.7); margin: 12px 0 24px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Start Screen -->
+  <div id="startScreen" class="start-screen">
+    <div class="heart">💝</div>
+    <h1>Valentine's Treasure Hunt</h1>
+    <p>Follow the clues, share your location, and find the treasure together!</p>
+    <button onclick="startHunt()">Begin the Adventure</button>
+  </div>
+
+  <!-- Hunt Screen -->
+  <div id="huntScreen" style="display:none">
+    <h1>💝 Treasure Hunt</h1>
+    <div class="progress" id="progress"></div>
+    <div class="riddle-card">
+      <div class="stop-label" id="stopLabel"></div>
+      <div class="riddle-text" id="riddleText"></div>
+    </div>
+    <button id="checkBtn" onclick="checkLocation()">📍 Check My Location</button>
+    <div class="feedback" id="feedback">
+      <div id="feedbackMsg"></div>
+      <div class="hint" id="hintText"></div>
+    </div>
+  </div>
+
+  <!-- Finished Screen -->
+  <div id="finishedScreen" class="finished">
+    <div class="big-heart">💖</div>
+    <h2>You found it!</h2>
+    <p>Happy Valentine's Day! 🥂</p>
+  </div>
+
+</div>
+<script>
+let currentStop = 1;
+let totalStops = 5;
+
+// Restore progress on page load
+(function restore() {
+  const saved = localStorage.getItem('huntStop');
+  const finished = localStorage.getItem('huntFinished');
+  if (finished) {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('finishedScreen').classList.add('show');
+  } else if (saved) {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('huntScreen').style.display = 'block';
+    loadStop(parseInt(saved));
+  }
+})();
+
+async function startHunt() {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('huntScreen').style.display = 'block';
+  localStorage.setItem('huntStop', '1');
+  await loadStop(1);
+}
+
+async function loadStop(order) {
+  currentStop = order;
+  localStorage.setItem('huntStop', String(order));
+  const res = await fetch(`/api/stops?order=${order}`);
+  const data = await res.json();
+  totalStops = data.total;
+
+  document.getElementById('stopLabel').textContent = `Clue ${order} of ${totalStops}`;
+  document.getElementById('riddleText').textContent = data.riddle;
+  document.getElementById('feedback').classList.remove('show', 'correct', 'wrong');
+  document.getElementById('checkBtn').disabled = false;
+
+  // Update progress dots
+  const prog = document.getElementById('progress');
+  prog.innerHTML = '';
+  for (let i = 1; i <= totalStops; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i < order ? ' done' : '') + (i === order ? ' current' : '');
+    prog.appendChild(dot);
+  }
+}
+
+async function checkLocation() {
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = true;
+  btn.textContent = '📡 Getting location...';
+
+  try {
+    const pos = await new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+      });
+    });
+
+    const { latitude: lat, longitude: lng } = pos.coords;
+
+    const res = await fetch('/api/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: currentStop, lat, lng }),
+    });
+    const data = await res.json();
+
+    const fb = document.getElementById('feedback');
+    const msg = document.getElementById('feedbackMsg');
+    const hint = document.getElementById('hintText');
+
+    fb.classList.remove('correct', 'wrong');
+    fb.classList.add('show', data.correct ? 'correct' : 'wrong');
+    msg.textContent = data.message;
+    hint.textContent = data.hint ? `💡 ${data.hint}` : '';
+
+    if (data.finished) {
+      localStorage.setItem('huntFinished', 'true');
+      setTimeout(() => {
+        document.getElementById('huntScreen').style.display = 'none';
+        document.getElementById('finishedScreen').classList.add('show');
+      }, 2000);
+    } else if (data.correct && data.next) {
+      setTimeout(() => loadStop(data.next), 2000);
+    } else {
+      btn.disabled = false;
+    }
+  } catch (err) {
+    alert('Could not get location. Make sure GPS is enabled!');
+    btn.disabled = false;
+  }
+
+  btn.textContent = '📍 Check My Location';
+}
+</script>
+</body>
+</html>
