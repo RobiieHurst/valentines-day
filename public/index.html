@@ -3,153 +3,1075 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>💝 Valentine's Treasure Hunt</title>
+<title>Rob & Lara's Valentine's Treasure Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
+  :root {
+    --rose: #e91e63;
+    --rose-light: #f48fb1;
+    --rose-dark: #880e4f;
+    --blush: #fce4ec;
+    --warm-bg: #1a0a1e;
+    --card-bg: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --gold: #ffd700;
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    font-family: var(--sans);
+    background: linear-gradient(150deg, #1a0a1e 0%, #2d1b3d 30%, #1a1a2e 60%, #0f1b3d 100%);
     color: #fff;
     min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Floating hearts background */
+  .hearts-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .floating-heart {
+    position: absolute;
+    bottom: -60px;
+    opacity: 0;
+    animation: floatUp linear infinite;
+    font-size: 20px;
+  }
+
+  @keyframes floatUp {
+    0% {
+      transform: translateY(0) rotate(0deg) scale(0.5);
+      opacity: 0;
+    }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.3; }
+    100% {
+      transform: translateY(-110vh) rotate(360deg) scale(1);
+      opacity: 0;
+    }
+  }
+
+  /* Main container */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
   }
-  .container {
-    max-width: 420px;
-    width: 100%;
-    padding: 24px;
+
+  /* ---- START SCREEN ---- */
+  .start-screen {
     text-align: center;
+    animation: fadeInUp 0.8s ease-out;
   }
-  h1 { font-size: 1.6rem; margin-bottom: 8px; }
-  .heart { font-size: 3rem; margin-bottom: 16px; }
-  .progress {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .dot {
-    width: 14px; height: 14px;
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  .start-photo {
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    transition: background 0.3s;
+    object-fit: cover;
+    border: 3px solid var(--rose-light);
+    box-shadow: 0 0 30px rgba(233, 30, 99, 0.4), 0 0 60px rgba(233, 30, 99, 0.15);
+    margin-bottom: 20px;
+    animation: fadeInUp 1s ease-out;
   }
-  .dot.done { background: #e91e63; }
-  .dot.current { background: #ff5252; box-shadow: 0 0 10px #ff5252; }
-  .riddle-card {
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 28px 20px;
-    margin: 20px 0;
-    border: 1px solid rgba(255,255,255,0.1);
+
+  .start-heart {
+    font-size: 4.5rem;
+    display: inline-block;
+    animation: pulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(233, 30, 99, 0.5));
   }
-  .riddle-text {
-    font-size: 1.2rem;
-    line-height: 1.5;
+
+  .start-screen h1 {
+    font-family: var(--serif);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 16px 0 4px;
+    background: linear-gradient(135deg, var(--rose-light), #fff, var(--rose-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .start-screen .subtitle {
+    font-family: var(--serif);
     font-style: italic;
-    margin-bottom: 8px;
+    font-size: 1.1rem;
+    color: var(--rose-light);
+    margin-bottom: 20px;
+    opacity: 0.9;
   }
-  .stop-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 12px;
+
+  .start-screen .description {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 32px;
+    max-width: 340px;
   }
-  button {
-    background: linear-gradient(135deg, #e91e63, #ff5252);
+
+  /* Buttons */
+  .btn {
+    background: linear-gradient(135deg, var(--rose), #ff5252);
     color: #fff;
     border: none;
-    padding: 16px 32px;
+    padding: 16px 40px;
     border-radius: 50px;
-    font-size: 1.1rem;
+    font-family: var(--sans);
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
     width: 100%;
-    max-width: 280px;
+    max-width: 300px;
+    box-shadow: 0 4px 20px rgba(233, 30, 99, 0.4);
+    position: relative;
+    overflow: hidden;
   }
-  button:active { transform: scale(0.96); }
-  button:disabled {
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn:hover::before { left: 100%; }
+  .btn:active { transform: scale(0.96); }
+  .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: none;
+    font-size: 0.85rem;
+    padding: 10px 24px;
+    margin-top: 12px;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .btn-back {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: none;
+    font-size: 0.9rem;
+    padding: 12px 28px;
+  }
+
+  .btn-back:hover {
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* ---- HUNT SCREEN ---- */
+  #huntScreen {
+    width: 100%;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .hunt-header {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .hunt-header h1 {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--rose-light);
+  }
+
+  /* Timeline progress */
+  .timeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 16px 0 20px;
+    padding: 0 10px;
+  }
+
+  .timeline-step {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  .timeline-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.4s ease;
+    position: relative;
+  }
+
+  .timeline-dot.done {
+    background: var(--rose);
+    border-color: var(--rose);
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
+    cursor: pointer;
+  }
+
+  .timeline-dot.done:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+  }
+
+  .timeline-dot.done::after {
+    content: '\2713';
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .timeline-dot.viewing {
+    background: var(--rose-dark);
+    border-color: var(--rose-light);
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.6);
+    transform: scale(1.15);
+  }
+
+  .timeline-dot.current {
+    background: linear-gradient(135deg, var(--rose), #ff5252);
+    border-color: var(--rose-light);
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+    transform: scale(1.15);
+    animation: dotPulse 2s ease-in-out infinite;
+    cursor: pointer;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(233, 30, 99, 0.5); }
+    50% { box-shadow: 0 0 30px rgba(233, 30, 99, 0.8); }
+  }
+
+  .timeline-line {
+    width: 28px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 0.4s;
+  }
+
+  .timeline-line.done {
+    background: var(--rose);
+  }
+
+  /* Riddle card */
+  .riddle-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 0;
+    margin: 0 0 20px;
+    border: 1px solid var(--card-border);
+    overflow: hidden;
+    transition: all 0.5s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .riddle-card.entering {
+    animation: cardEnter 0.5s ease-out;
+  }
+
+  @keyframes cardEnter {
+    from { opacity: 0; transform: translateX(40px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  /* Photo section at top of card — hidden until solved */
+  .photo-section {
+    position: relative;
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #2d1b3d, #1a0a1e);
+    transition: height 0.5s ease;
+  }
+
+  .photo-section.revealed {
+    height: 200px;
+  }
+
+  .photo-section img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 20px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(233, 30, 99, 0.8);
+    backdrop-filter: blur(8px);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .location-badge.mystery {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .stop-emoji {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+
+  /* Mystery header shown before solving */
+  .mystery-header {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mystery-header .stop-emoji {
+    font-size: 1.4rem;
+    opacity: 0.5;
+  }
+
+  /* Viewing previous label */
+  .viewing-label {
+    text-align: center;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  /* Riddle text area */
+  .riddle-content {
+    padding: 24px 20px;
+  }
+
+  .riddle-content.with-mystery {
+    padding-top: 16px;
+  }
+
+  .stop-label {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--rose-light);
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .riddle-text {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    line-height: 1.7;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: pre-line;
+  }
+
+  /* Map section */
+  .map-section {
+    margin: 0 0 20px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .map-section.map-reveal {
+    animation: mapReveal 0.6s ease-out;
+  }
+
+  @keyframes mapReveal {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scaleY(0.95);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scaleY(1);
+      max-height: 400px;
+    }
+  }
+
+  .map-header {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .map-header span {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .map-toggle {
+    background: none;
+    border: none;
+    color: var(--rose-light);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    width: auto;
+    max-width: none;
+    box-shadow: none;
+  }
+
+  .map-toggle:hover {
+    background: rgba(255,255,255,0.05);
+  }
+
+  #map {
+    height: 220px;
+    width: 100%;
+    background: #1a1a2e;
+    transition: height 0.3s ease;
+  }
+
+  #map.collapsed {
+    height: 0;
+  }
+
+  /* Leaflet tile dark filter */
+  .leaflet-tile-pane {
+    filter: brightness(0.7) saturate(0.8) hue-rotate(10deg);
+  }
+
+  .leaflet-control-zoom a {
+    background: rgba(26, 10, 30, 0.9) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.1) !important;
+  }
+
+  /* Button area */
+  .action-area {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Feedback */
   .feedback {
-    margin-top: 20px;
-    padding: 16px;
-    border-radius: 12px;
-    font-size: 1rem;
+    margin-top: 16px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    font-size: 0.95rem;
     display: none;
+    animation: fadeInUp 0.3s ease-out;
+    backdrop-filter: blur(10px);
   }
+
   .feedback.show { display: block; }
-  .feedback.correct { background: rgba(76,175,80,0.2); border: 1px solid rgba(76,175,80,0.4); }
-  .feedback.wrong { background: rgba(255,82,82,0.15); border: 1px solid rgba(255,82,82,0.3); }
-  .hint { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 8px; }
+
+  .feedback.correct {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+  }
+
+  .feedback.wrong {
+    background: rgba(255, 82, 82, 0.12);
+    border: 1px solid rgba(255, 82, 82, 0.25);
+  }
+
+  .feedback-msg {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .hint {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* ---- FINISHED SCREEN ---- */
   .finished {
     display: none;
     text-align: center;
+    animation: fadeInUp 0.8s ease-out;
   }
+
   .finished.show { display: block; }
-  .finished h2 { font-size: 2rem; margin: 16px 0; }
-  .finished .big-heart { font-size: 5rem; }
-  .start-screen { text-align: center; }
-  .start-screen p { color: rgba(255,255,255,0.7); margin: 12px 0 24px; }
+
+  .finale-hearts {
+    font-size: 4rem;
+    margin-bottom: 16px;
+    animation: pulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 30px rgba(233, 30, 99, 0.6));
+  }
+
+  .finished h2 {
+    font-family: var(--serif);
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 16px 0 8px;
+    background: linear-gradient(135deg, var(--gold), #fff, var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .finished .love-message {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--rose-light);
+    margin: 8px 0 24px;
+    line-height: 1.6;
+  }
+
+  .finished .personal-note {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin: 20px 0;
+    text-align: left;
+  }
+
+  .finished .personal-note p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 12px;
+  }
+
+  .finished .personal-note p:last-child {
+    margin-bottom: 0;
+  }
+
+  .finished .personal-note .sign-off {
+    text-align: right;
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--rose-light);
+    font-size: 1.1rem;
+  }
+
+  /* Confetti canvas */
+  #confetti {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 380px) {
+    .timeline-dot { width: 30px; height: 30px; font-size: 13px; }
+    .timeline-line { width: 18px; }
+    .start-screen h1 { font-size: 1.7rem; }
+    .riddle-text { font-size: 1.05rem; }
+  }
 </style>
 </head>
 <body>
+
+<!-- Floating hearts background -->
+<div class="hearts-bg" id="heartsBg"></div>
+
+<!-- Confetti canvas (for correct answers) -->
+<canvas id="confetti"></canvas>
+
 <div class="container">
 
-  <!-- Start Screen -->
+  <!-- ======== START SCREEN ======== -->
   <div id="startScreen" class="start-screen">
-    <div class="heart">💝</div>
+    <img class="start-photo" src="/images/lara_9.jpeg" alt="Rob & Lara" />
+    <div class="start-heart">&#10084;&#65039;</div>
     <h1>Valentine's Treasure Hunt</h1>
-    <p>Follow the clues, share your location, and find the treasure together!</p>
-    <button onclick="startHunt()">Begin the Adventure</button>
+    <p class="subtitle">Rob & Lara</p>
+    <p class="description">
+      Five riddles. Five secret locations. Solve each clue,
+      check your location, and discover your love together.
+    </p>
+    <button class="btn" onclick="startHunt()">Begin the Adventure</button>
+    <br>
+    <button class="btn btn-secondary" onclick="resetProgress()" style="margin-top:16px; font-size:0.8rem;">Reset Progress</button>
   </div>
 
-  <!-- Hunt Screen -->
+  <!-- ======== HUNT SCREEN ======== -->
   <div id="huntScreen" style="display:none">
-    <h1>💝 Treasure Hunt</h1>
-    <div class="progress" id="progress"></div>
-    <div class="riddle-card">
-      <div class="stop-label" id="stopLabel"></div>
-      <div class="riddle-text" id="riddleText"></div>
+    <div class="hunt-header">
+      <h1>Valentine's Treasure Hunt</h1>
     </div>
-    <button id="checkBtn" onclick="checkLocation()">📍 Check My Location</button>
+
+    <!-- Timeline Progress -->
+    <div class="timeline" id="timeline"></div>
+
+    <!-- "Viewing previous" label (hidden by default) -->
+    <div class="viewing-label" id="viewingLabel" style="display:none"></div>
+
+    <!-- Riddle Card -->
+    <div class="riddle-card" id="riddleCard">
+      <!-- Photo section: hidden until stop is solved -->
+      <div class="photo-section" id="photoSection">
+        <img id="stopPhoto" src="" alt="" />
+        <div class="photo-overlay">
+          <div class="location-badge" id="locationBadge">
+            <span id="badgeText"></span>
+          </div>
+          <div class="stop-emoji" id="stopEmoji"></div>
+        </div>
+      </div>
+
+      <!-- Mystery header: shown while stop is unsolved -->
+      <div class="mystery-header" id="mysteryHeader">
+        <div class="location-badge mystery">
+          <span>Mystery Location</span>
+        </div>
+        <div class="stop-emoji">?</div>
+      </div>
+
+      <div class="riddle-content" id="riddleContent">
+        <div class="stop-label" id="stopLabel"></div>
+        <div class="riddle-text" id="riddleText"></div>
+      </div>
+    </div>
+
+    <!-- Map (hidden until first correct answer) -->
+    <div class="map-section" id="mapSection" style="display:none">
+      <div class="map-header">
+        <span>Your Adventure</span>
+        <button class="map-toggle" onclick="toggleMap()">Hide Map</button>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <!-- Check Location Button -->
+    <div class="action-area" id="actionArea">
+      <button class="btn" id="checkBtn" onclick="checkLocation()">Check My Location</button>
+    </div>
+
+    <!-- Back to Current Clue Button (hidden by default) -->
+    <div class="action-area" id="backArea" style="display:none">
+      <button class="btn btn-back" onclick="returnToCurrentStop()">Back to Current Clue</button>
+    </div>
+
+    <!-- Feedback -->
     <div class="feedback" id="feedback">
-      <div id="feedbackMsg"></div>
+      <div class="feedback-msg" id="feedbackMsg"></div>
       <div class="hint" id="hintText"></div>
     </div>
   </div>
 
-  <!-- Finished Screen -->
+  <!-- ======== FINISHED SCREEN ======== -->
   <div id="finishedScreen" class="finished">
-    <div class="big-heart">💖</div>
+    <div class="finale-hearts">&#10084;&#65039;</div>
     <h2>You found it!</h2>
-    <p>Happy Valentine's Day! 🥂</p>
+    <p class="love-message">Happy Valentine's Day, Lara</p>
+    <div class="personal-note">
+      <p>
+        From the penguins to brunch, from the harbour to the nursery,
+        and now home to plant something new together.
+      </p>
+      <p>
+        Every stop along the way is a place that means something
+        because we've shared it together. Now let's get our hands dirty.
+      </p>
+      <p class="sign-off">Love you Bubu, Rob xxx </p>
+    </div>
+    <button class="btn btn-secondary" onclick="resetProgress()" style="margin-top:24px;">Start Over</button>
   </div>
 
 </div>
+
 <script>
+// ===== State =====
 let currentStop = 1;
 let totalStops = 5;
+let map = null;
+let mapMarkers = [];
+let mapInitialized = false;
+let viewingPrevious = false; // true when looking at a completed stop
 
-// Restore progress on page load
-(function restore() {
-  const saved = localStorage.getItem('huntStop');
-  const finished = localStorage.getItem('huntFinished');
-  if (finished) {
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('finishedScreen').classList.add('show');
-  } else if (saved) {
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('huntScreen').style.display = 'block';
-    loadStop(parseInt(saved));
+// Confirmed stop coordinates — only populated after correct answers
+const stopCoords = [];
+
+// ===== Floating Hearts =====
+function createFloatingHearts() {
+  const container = document.getElementById('heartsBg');
+  const hearts = ['\u2764\ufe0f', '\ud83d\udc95', '\ud83d\udc96', '\ud83d\udc97', '\ud83d\udc9d', '\u2763\ufe0f'];
+  for (let i = 0; i < 15; i++) {
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+    heart.style.left = Math.random() * 100 + '%';
+    heart.style.fontSize = (12 + Math.random() * 18) + 'px';
+    heart.style.animationDuration = (8 + Math.random() * 12) + 's';
+    heart.style.animationDelay = (Math.random() * 10) + 's';
+    container.appendChild(heart);
   }
-})();
+}
+createFloatingHearts();
 
+// ===== Confetti =====
+const confettiCanvas = document.getElementById('confetti');
+const ctx = confettiCanvas.getContext('2d');
+let confettiPieces = [];
+let confettiAnimating = false;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+resizeConfetti();
+window.addEventListener('resize', resizeConfetti);
+
+function launchConfetti() {
+  confettiPieces = [];
+  const colors = ['#e91e63', '#ff5252', '#f48fb1', '#ffd700', '#ff4081', '#ffffff', '#ff80ab'];
+  for (let i = 0; i < 100; i++) {
+    confettiPieces.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * 200,
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 3,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1,
+    });
+  }
+  if (!confettiAnimating) {
+    confettiAnimating = true;
+    animateConfetti();
+  }
+}
+
+function animateConfetti() {
+  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  let active = false;
+  for (const p of confettiPieces) {
+    if (p.opacity <= 0) continue;
+    active = true;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.rotation += p.rotSpeed;
+    if (p.y > confettiCanvas.height) p.opacity -= 0.02;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation * Math.PI / 180);
+    ctx.globalAlpha = Math.max(0, p.opacity);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    ctx.restore();
+  }
+  if (active) {
+    requestAnimationFrame(animateConfetti);
+  } else {
+    confettiAnimating = false;
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+}
+
+// ===== Confirmed Stops Persistence =====
+function saveConfirmedStops() {
+  localStorage.setItem('huntConfirmedStops', JSON.stringify(stopCoords));
+}
+
+function loadConfirmedStops() {
+  const saved = localStorage.getItem('huntConfirmedStops');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      parsed.forEach(s => {
+        if (!stopCoords.find(sc => sc.order === s.order)) {
+          stopCoords.push(s);
+        }
+      });
+    } catch (e) {
+      // ignore corrupt data
+    }
+  }
+}
+
+// ===== Map =====
+function initMap() {
+  if (mapInitialized) return;
+  map = L.map('map', {
+    center: [-34.15, 18.42],
+    zoom: 12,
+    zoomControl: true,
+    attributionControl: false,
+  });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+  }).addTo(map);
+  mapInitialized = true;
+}
+
+function revealMap() {
+  const mapSection = document.getElementById('mapSection');
+  if (mapSection.style.display === 'none') {
+    mapSection.style.display = '';
+    mapSection.classList.remove('map-reveal');
+    void mapSection.offsetWidth;
+    mapSection.classList.add('map-reveal');
+  }
+  if (!mapInitialized) initMap();
+  setTimeout(() => map && map.invalidateSize(), 100);
+  setTimeout(() => map && map.invalidateSize(), 400);
+}
+
+function updateMapMarkers() {
+  if (!map) return;
+
+  mapMarkers.forEach(m => map.removeLayer(m));
+  mapMarkers = [];
+
+  const sorted = [...stopCoords].sort((a, b) => a.order - b.order);
+
+  sorted.forEach(sc => {
+    const icon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e91e63;
+        border: 2px solid rgba(255,255,255,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        box-shadow: 0 0 10px rgba(233,30,99,0.4);
+        color: #fff;
+        font-weight: 600;
+      ">\u2713</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+
+    const marker = L.marker([sc.lat, sc.lng], { icon }).addTo(map);
+    marker.bindPopup(`<div style="text-align:center;font-family:sans-serif;"><b>${sc.emoji} ${sc.locationName}</b><br><small>Completed</small></div>`);
+    mapMarkers.push(marker);
+  });
+
+  if (sorted.length > 1) {
+    const routePoints = sorted.map(sc => [sc.lat, sc.lng]);
+    const line = L.polyline(routePoints, {
+      color: '#e91e63',
+      weight: 2,
+      opacity: 0.5,
+      dashArray: '8, 8',
+    }).addTo(map);
+    mapMarkers.push(line);
+  }
+
+  if (sorted.length > 0) {
+    const latest = sorted[sorted.length - 1];
+    if (sorted.length === 1) {
+      map.setView([latest.lat, latest.lng], 14, { animate: true });
+    } else {
+      const bounds = L.latLngBounds(sorted.map(sc => [sc.lat, sc.lng]));
+      map.fitBounds(bounds, { padding: [30, 30], animate: true });
+    }
+  }
+}
+
+function toggleMap() {
+  const mapEl = document.getElementById('map');
+  const btn = document.querySelector('.map-toggle');
+  if (mapEl.classList.contains('collapsed')) {
+    mapEl.classList.remove('collapsed');
+    btn.textContent = 'Hide Map';
+    setTimeout(() => map && map.invalidateSize(), 350);
+  } else {
+    mapEl.classList.add('collapsed');
+    btn.textContent = 'Show Map';
+  }
+}
+
+// ===== Card Reveal =====
+function setCardMystery() {
+  document.getElementById('photoSection').classList.remove('revealed');
+  document.getElementById('mysteryHeader').style.display = 'flex';
+  document.getElementById('riddleContent').classList.add('with-mystery');
+}
+
+function setCardRevealed(emoji, locationName, image) {
+  const photoSection = document.getElementById('photoSection');
+  const mysteryHeader = document.getElementById('mysteryHeader');
+
+  document.getElementById('stopPhoto').src = image;
+  document.getElementById('stopPhoto').alt = `Lara at ${locationName}`;
+  document.getElementById('badgeText').textContent = locationName;
+  document.getElementById('stopEmoji').textContent = emoji;
+
+  mysteryHeader.style.display = 'none';
+  document.getElementById('riddleContent').classList.remove('with-mystery');
+  photoSection.classList.add('revealed');
+}
+
+// ===== View Previous Stop =====
+function viewPreviousStop(order) {
+  const sc = stopCoords.find(s => s.order === order);
+  if (!sc) return;
+
+  viewingPrevious = true;
+
+  // Show the revealed card for this completed stop
+  setCardRevealed(sc.emoji, sc.locationName, sc.image);
+
+  // Update labels
+  document.getElementById('stopLabel').textContent = `Stop ${order} of ${totalStops}`;
+  document.getElementById('riddleText').textContent = sc.riddle;
+
+  // Show "viewing previous" label
+  const viewLabel = document.getElementById('viewingLabel');
+  viewLabel.textContent = `Viewing completed stop ${order}`;
+  viewLabel.style.display = 'block';
+
+  // Card animation
+  const card = document.getElementById('riddleCard');
+  card.classList.remove('entering');
+  void card.offsetWidth;
+  card.classList.add('entering');
+
+  // Hide check button + feedback, show back button
+  document.getElementById('actionArea').style.display = 'none';
+  document.getElementById('backArea').style.display = 'block';
+  document.getElementById('feedback').classList.remove('show', 'correct', 'wrong');
+
+  // Update timeline to highlight which one we're viewing
+  updateTimeline(currentStop, order);
+}
+
+function returnToCurrentStop() {
+  viewingPrevious = false;
+
+  // Hide viewing label and back button, show check button
+  document.getElementById('viewingLabel').style.display = 'none';
+  document.getElementById('backArea').style.display = 'none';
+  document.getElementById('actionArea').style.display = 'block';
+
+  // Reload the current active stop
+  loadStop(currentStop);
+}
+
+// ===== Timeline =====
+function updateTimeline(currentOrder, viewingOrder) {
+  const container = document.getElementById('timeline');
+  container.innerHTML = '';
+  for (let i = 1; i <= totalStops; i++) {
+    const step = document.createElement('div');
+    step.className = 'timeline-step';
+
+    const dot = document.createElement('div');
+    dot.className = 'timeline-dot';
+    if (i < currentOrder) {
+      dot.classList.add('done');
+      // Highlight the one being viewed
+      if (viewingOrder && i === viewingOrder) {
+        dot.classList.add('viewing');
+      }
+      // Click to view completed stop
+      dot.addEventListener('click', () => viewPreviousStop(i));
+    } else if (i === currentOrder) {
+      dot.classList.add('current');
+      dot.textContent = '?';
+      // If viewing a previous stop, clicking current returns to it
+      if (viewingPrevious) {
+        dot.addEventListener('click', () => returnToCurrentStop());
+      }
+    } else {
+      dot.textContent = i;
+      dot.style.color = 'rgba(255,255,255,0.3)';
+      dot.style.fontSize = '12px';
+    }
+    step.appendChild(dot);
+    container.appendChild(step);
+
+    if (i < totalStops) {
+      const line = document.createElement('div');
+      line.className = 'timeline-line';
+      if (i < currentOrder) line.classList.add('done');
+      container.appendChild(line);
+    }
+  }
+}
+
+// ===== Core Logic =====
 async function startHunt() {
   document.getElementById('startScreen').style.display = 'none';
   document.getElementById('huntScreen').style.display = 'block';
@@ -160,29 +1082,40 @@ async function startHunt() {
 async function loadStop(order) {
   currentStop = order;
   localStorage.setItem('huntStop', String(order));
+
   const res = await fetch(`/api/stops?order=${order}`);
   const data = await res.json();
   totalStops = data.total;
 
+  // Show mystery state — no location details revealed
+  setCardMystery();
+
+  // Update riddle
   document.getElementById('stopLabel').textContent = `Clue ${order} of ${totalStops}`;
   document.getElementById('riddleText').textContent = data.riddle;
+
+  // Card animation
+  const card = document.getElementById('riddleCard');
+  card.classList.remove('entering');
+  void card.offsetWidth;
+  card.classList.add('entering');
+
+  // Reset feedback and buttons
   document.getElementById('feedback').classList.remove('show', 'correct', 'wrong');
   document.getElementById('checkBtn').disabled = false;
+  document.getElementById('checkBtn').textContent = 'Check My Location';
+  document.getElementById('actionArea').style.display = 'block';
+  document.getElementById('backArea').style.display = 'none';
+  document.getElementById('viewingLabel').style.display = 'none';
 
-  // Update progress dots
-  const prog = document.getElementById('progress');
-  prog.innerHTML = '';
-  for (let i = 1; i <= totalStops; i++) {
-    const dot = document.createElement('div');
-    dot.className = 'dot' + (i < order ? ' done' : '') + (i === order ? ' current' : '');
-    prog.appendChild(dot);
-  }
+  // Update timeline
+  updateTimeline(order);
 }
 
 async function checkLocation() {
   const btn = document.getElementById('checkBtn');
   btn.disabled = true;
-  btn.textContent = '📡 Getting location...';
+  btn.textContent = 'Getting location...';
 
   try {
     const pos = await new Promise((resolve, reject) => {
@@ -208,16 +1141,45 @@ async function checkLocation() {
     fb.classList.remove('correct', 'wrong');
     fb.classList.add('show', data.correct ? 'correct' : 'wrong');
     msg.textContent = data.message;
-    hint.textContent = data.hint ? `💡 ${data.hint}` : '';
+    hint.textContent = data.hint ? `Hint: ${data.hint}` : '';
+
+    if (data.correct) {
+      launchConfetti();
+
+      // Reveal the location on the card
+      setCardRevealed(data.emoji, data.locationName, data.image);
+
+      // Fetch the riddle text to store with the confirmed stop
+      const riddleText = document.getElementById('riddleText').textContent;
+
+      // Store the confirmed stop (including riddle for revisiting)
+      if (!stopCoords.find(s => s.order === currentStop)) {
+        stopCoords.push({
+          order: currentStop,
+          lat: data.lat,
+          lng: data.lng,
+          emoji: data.emoji,
+          locationName: data.locationName,
+          image: data.image,
+          riddle: riddleText,
+        });
+        saveConfirmedStops();
+      }
+
+      // Reveal the map
+      revealMap();
+      setTimeout(() => updateMapMarkers(), 200);
+    }
 
     if (data.finished) {
       localStorage.setItem('huntFinished', 'true');
       setTimeout(() => {
         document.getElementById('huntScreen').style.display = 'none';
         document.getElementById('finishedScreen').classList.add('show');
-      }, 2000);
+        launchConfetti();
+      }, 2500);
     } else if (data.correct && data.next) {
-      setTimeout(() => loadStop(data.next), 2000);
+      setTimeout(() => loadStop(data.next), 2500);
     } else {
       btn.disabled = false;
     }
@@ -226,8 +1188,38 @@ async function checkLocation() {
     btn.disabled = false;
   }
 
-  btn.textContent = '📍 Check My Location';
+  btn.textContent = 'Check My Location';
 }
+
+function resetProgress() {
+  localStorage.removeItem('huntStop');
+  localStorage.removeItem('huntFinished');
+  localStorage.removeItem('huntConfirmedStops');
+  location.reload();
+}
+
+// ===== Restore Progress =====
+(async function restore() {
+  const saved = localStorage.getItem('huntStop');
+  const finished = localStorage.getItem('huntFinished');
+
+  loadConfirmedStops();
+
+  if (finished) {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('finishedScreen').classList.add('show');
+  } else if (saved) {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('huntScreen').style.display = 'block';
+
+    if (stopCoords.length > 0) {
+      revealMap();
+      setTimeout(() => updateMapMarkers(), 300);
+    }
+
+    await loadStop(parseInt(saved));
+  }
+})();
 </script>
 </body>
 </html>

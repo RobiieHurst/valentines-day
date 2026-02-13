@@ -1,4 +1,4 @@
-import stops from './_data.js';
+import stops, { testMode } from './_data.js';
 
 const haversine = (lat1, lng1, lat2, lng2) => {
   const R = 6371000;
@@ -17,7 +17,7 @@ export default (req, res) => {
   if (!stop) return res.status(404).json({ error: 'Stop not found' });
 
   const dist = haversine(lat, lng, stop.lat, stop.lng);
-  const correct = dist <= stop.radiusMeters;
+  const correct = testMode ? true : dist <= stop.radiusMeters;
 
   let message;
   if (correct) {
@@ -37,5 +37,11 @@ export default (req, res) => {
     hint: !correct ? stop.hint : undefined,
     next: correct && order < stops.length ? order + 1 : undefined,
     finished: correct && order === stops.length,
+    // Only reveal location details on correct answer
+    lat: correct ? stop.lat : undefined,
+    lng: correct ? stop.lng : undefined,
+    emoji: correct ? stop.emoji : undefined,
+    locationName: correct ? stop.locationName : undefined,
+    image: correct ? stop.image : undefined,
   });
 };
