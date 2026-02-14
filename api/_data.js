@@ -6,8 +6,8 @@ const stops = [
   {
     order: 1,
     riddle: "A tower tall on rocky shore,\nwhere Atlantic winds forever roar.\nThe tallest iron light you'll find,\nleaves the Cape's wild west behind.",
-    lat: -34.1548,
-    lng: 18.3225,
+    lat: -34.14861,
+    lng: 18.319844,
     radiusMeters: 100,
     hint: "Slangkop — the tallest cast-iron lighthouse in South Africa, in Kommetjie.",
     emoji: "🗼",
