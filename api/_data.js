@@ -30,7 +30,7 @@ const stops = [
     riddle: "Before you leave this naval town,\nstroll the street where old meets found.\nAntiques and trinkets line the way —\nfind something old to mark the day.",
     lat: -34.1910,
     lng: 18.4320,
-    radiusMeters: 120,
+    radiusMeters: 500,
     hint: "St George's Street in Simon's Town — browse the antique and vintage shops.",
     emoji: "🏛️",
     locationName: "Simon's Town Main Street",
